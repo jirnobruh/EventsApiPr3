@@ -28,12 +28,9 @@ public class Program
         app.UseCors("AllowFrontend"); // Активируем CORS
         
         // Затем привычные middleware
-        //app.UseRouting()
-        //app.MapControllers()
+        app.UseRouting();
+        //app.MapControllers();
         // в minimal api эти промежуточные по не используем
-        
-        // Minimal API
-        app.Run();
         
         app.MapGet("/api/events", () => Results.Ok(events));
         
@@ -74,6 +71,7 @@ public class Program
             return Results.NoContent();
         });
         
-        
+        // Minimal API
+        app.Run();
     }
 }
