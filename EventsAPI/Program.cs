@@ -1,4 +1,5 @@
 using EventsAPI.Models;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace EventsAPI;
 
@@ -24,6 +25,8 @@ public class Program
 
         // Config
         var app = builder.Build();
+        
+        app.UseMiddleware<LoggingMiddleware>();
         
         app.UseCors("AllowFrontend"); // Активируем CORS
         
