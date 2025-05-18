@@ -99,23 +99,24 @@ public class Program
         // PUT /api/events/{id}
         app.MapPut("/api/events/{id:int}", (int id, EventItem upd) =>
         {
-            var eventItem = events.FirstOrDefault(e => e.Id == id);
-            if (eventItem is null) return Results.NotFound();
-            
-            eventItem.Title = upd.Title;
-            eventItem.EventDate = upd.EventDate;
-            
-            return Results.NoContent();
+            var element = events.Where(o => o.Id == id).FirstOrDefault();
+            if (element != null)
+                element.Title = upd.Title;
+
+            return Results.Ok();
         });
         
         // DELETE /api/events/{id}
         app.MapDelete("/api/events/{id:int}", (int id) =>
         {
-            var eventItem = events.FirstOrDefault(e => e.Id == id);
-            if (eventItem is null) return Results.NotFound();
-            
-            events.Remove(eventItem);
-            return Results.NoContent();
+            var element = events.Find(o => o.Id == id);
+
+            if (element != null)
+            {
+                events.Remove(element);
+                return Results.Ok();
+            }
+            return Results.BadRequest();
         });
         
         // Minimal API
