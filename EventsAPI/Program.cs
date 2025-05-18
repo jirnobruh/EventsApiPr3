@@ -28,7 +28,48 @@ public class Program
         
         app.UseMiddleware<LoggingMiddleware>();
         
-        app.UseCors("AllowFrontend"); // Активируем CORS
+        // Устанавливаем общий обработчик ошибок
+        app.UseExceptionHandler("/error");
+        
+        // Endpoint для ошибки
+        app.Map("/error", (HttpContext context, ILogger<Program> logger) =>
+        {
+            var innerException = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+            logger.LogError(innerException, "Unhandled exception occured");
+            
+            return Results.Problem(detail: "Внутренняя ошибка сервера. Повторите запрос позже.", statusCode: 500);
+        });
+
+        app.MapGet("/api/events", (DateTime? from, DateTime? to, string? sort) =>
+        {
+            var filtered = events;
+            if (from != null)
+                filtered = filtered.Where(o => o.EventDate >= from).ToList();
+            if (to != null)
+                filtered = filtered.Where(o => o.EventDate <= to).ToList();
+
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var s = sort.Trim().ToLowerInvariant();
+                if (s == "asc")
+                {
+                    filtered.OrderBy(e => e.EventDate);
+                }
+                else if (s == "desc")
+                {
+                    filtered.OrderByDescending(e => e.EventDate);
+                }
+                else
+                {
+                    return Results.BadRequest("Параметр 'sort' может быть только 'asc' 'desc'.");
+                }
+            }
+            return Results.Ok(filtered.ToList());
+        });
+        
+        // Активируем CORS
+        app.UseCors("AllowFrontend"); 
         
         // Затем привычные middleware
         app.UseRouting();
@@ -47,6 +88,9 @@ public class Program
         // POST /api/events
         app.MapPost("/api/events", (EventItem newEv) =>
         {
+            if (newEv.EventDate < DateTime.Now)
+                return Results.BadRequest("Дата события не может быть в прошлом.");
+            
             newEv.Id = nextId++;
             events.Add(newEv);
             return Results.Created($"api/events/{newEv.Id}", newEv);
